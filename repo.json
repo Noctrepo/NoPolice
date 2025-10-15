@@ -4,7 +4,7 @@
         "Name": "NoPolice",
         "InternalName": "NoPolice",
         "AssemblyVersion": "0.0.0.1",
-        "Description": "Hides the Weeaboo Police Requires, Visibility by SheepGoMeh",
+        "Description": "Hides the Weeaboo Police, requires Visibility by SheepGoMeh",
         "IconUrl": "https://github.com/Noctrepo/NoPolice/blob/master/NoPolice/Icon/NoPolice.png",
         "ApplicableVersion": "any",
         "Tags": [
