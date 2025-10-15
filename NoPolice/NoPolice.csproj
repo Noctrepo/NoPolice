@@ -20,6 +20,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Content Include="images\NoPolice.pdn" />
+      <Content Include="manifest.toml" />
       <Content Include="NoPolice\NoPolice.json" />
       <Content Include="NoPolice\packages.lock.json" />
       <Content Include="repo.json" />
