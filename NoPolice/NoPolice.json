@@ -1,15 +1,17 @@
 {
-    "Author": "Miles",
+    "Author": "Nocturn",
     "Name": "NoPolice",
     "InternalName": "NoPolice",
     "AssemblyVersion": "0.0.0.1",
-    "RepoUrl": "https://github.com/Milesnocte/PFLogs",
+    "RepoUrl": "https://github.com/Noctrepo/NoPolice",
+    "IconUrl": "https://github.com/Noctrepo/NoPolice/blob/master/NoPolice/Icon/NoPolice.png",
     "Description": "Hides the Weeaboo Police, requires Visibility by SheepGoMeh",
     "ApplicableVersion": "any",
     "Tags": [
-        "FFLogs",
-        "Tomestone",
-        "Party Finder"
+        "Visibility",
+        "Police",
+        "Weeaboo",
+        "Weeaboo Police"
     ],
     "DalamudApiLevel": 13,
     "LoadRequiredState": 0,

@@ -20,10 +20,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Content Include="NoPolice\Icon\NoPolice.png" />
       <Content Include="NoPolice\NoPolice.json" />
       <Content Include="NoPolice\packages.lock.json" />
       <Content Include="repo.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="images\icon.png">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>

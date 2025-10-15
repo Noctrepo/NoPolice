@@ -5,6 +5,7 @@
         "InternalName": "NoPolice",
         "AssemblyVersion": "0.0.0.1",
         "Description": "Hides the Weeaboo Police Requires \n Visibility by SheepGoMeh",
+        "IconUrl": "https://github.com/Noctrepo/NoPolice/blob/master/NoPolice/Icon/NoPolice.png",
         "ApplicableVersion": "any",
         "Tags": [
             "Visibility",
@@ -12,15 +13,15 @@
             "Weeaboo",
             "Weeaboo Police"
         ],
-        "RepoUrl": "https://github.com/Milesnocte/PFLogs",
+        "RepoUrl": "https://github.com/Noctrepo/NoPolice",
         "DalamudApiLevel": 13,
         "LoadRequiredState": 0,
         "LoadSync": false,
         "CanUnloadAsync": false,
         "LoadPriority": 0,
         "Punchline": "Hides the Weeaboo Police",
-        "DownloadLinkInstall": "https://github.com/Milesnocte/PFLogs/releases/download/0.0.0.8/latest.zip",
-        "DownloadLinkUpdate": "https://github.com/Milesnocte/PFLogs/releases/download/0.0.0.8/latest.zip",
+        "DownloadLinkInstall": "https://github.com/Noctrepo/NoPolice/releases/download/0.0.0.1/latest.zip",
+        "DownloadLinkUpdate": "https://github.com/Noctrepo/NoPolice/releases/download/0.0.0.1/latest.zip",
         "AcceptsFeedback": true
     }
 ]
