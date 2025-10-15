@@ -3,7 +3,7 @@
         "Author": "Nocturn",
         "Name": "NoPolice",
         "InternalName": "NoPolice",
-        "AssemblyVersion": "0.0.0.1",
+        "AssemblyVersion": "1.0.0.0",
         "Description": "Hides the Weeaboo Police, requires Visibility by SheepGoMeh",
         "IconUrl": "https://github.com/Noctrepo/NoPolice/blob/master/NoPolice/Icon/NoPolice.png",
         "ApplicableVersion": "any",
@@ -20,8 +20,8 @@
         "CanUnloadAsync": false,
         "LoadPriority": 0,
         "Punchline": "Hides the Weeaboo Police",
-        "DownloadLinkInstall": "https://github.com/Noctrepo/NoPolice/releases/download/0.0.0.1/latest.zip",
-        "DownloadLinkUpdate": "https://github.com/Noctrepo/NoPolice/releases/download/0.0.0.1/latest.zip",
+        "DownloadLinkInstall": "https://github.com/Noctrepo/NoPolice/releases/download/1.0.0.0/latest.zip",
+        "DownloadLinkUpdate": "https://github.com/Noctrepo/NoPolice/releases/download/1.0.0.0/latest.zip",
         "AcceptsFeedback": true
     }
 ]

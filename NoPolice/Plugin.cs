@@ -48,24 +48,27 @@ public sealed class Plugin : IDalamudPlugin
     
     private void PollPlayers()
     {
-        Framework.DelayTicks(10);
-        
         foreach (var actor in ObjectTable)
         {
             if (actor is IPlayerCharacter player)
             {
                 string name = player.Name.TextValue;
+                string pvisName = $"{player.Name.TextValue} {player.HomeWorld.RowId} NoPolice";
 
                 if (NormalizeName(name) == "weeaboopolice")
                 {
-                    if(HiddenPlayers.Contains(name)) continue;
-                    AddToVoidList.InvokeAction(name, player.HomeWorld.RowId,  "NoPolice");
+                    if (!HiddenPlayers.Contains(pvisName))
+                    {
+                        AddToVoidList.InvokeAction(name, player.HomeWorld.RowId, "NoPolice");
+                    }
+
                     HiddenPlayers = GetVoidListEntries.InvokeFunc().ToList();
                 }
+                
             }
         }
         
-        Framework.RunOnTick(PollPlayers, TimeSpan.FromSeconds(1), cancellationToken: _cts.Token);
+        Framework.RunOnTick(PollPlayers, TimeSpan.FromSeconds(3), cancellationToken: _cts.Token);
     }
     
     private static string NormalizeName(string name)
