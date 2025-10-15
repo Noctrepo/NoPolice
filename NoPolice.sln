@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoPolice", "NoPolice.csproj", "{A4A72DEE-5A36-478C-A562-EC6023D76B89}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoPolice", "NoPolice/NoPolice.csproj", "{A4A72DEE-5A36-478C-A562-EC6023D76B89}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

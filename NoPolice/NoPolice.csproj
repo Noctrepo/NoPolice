@@ -20,9 +20,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Content Include="NoPolice.json" />
-      <Content Include="NoPolice.png" />
-      <Content Include="packages.lock.json" />
+      <Content Include="NoPolice\Icon\NoPolice.png" />
+      <Content Include="NoPolice\NoPolice.json" />
+      <Content Include="NoPolice\packages.lock.json" />
       <Content Include="repo.json" />
     </ItemGroup>
 
