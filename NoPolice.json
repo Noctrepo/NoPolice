@@ -1,0 +1,21 @@
+{
+    "Author": "Miles",
+    "Name": "NoPolice",
+    "InternalName": "NoPolice",
+    "AssemblyVersion": "0.0.0.1",
+    "RepoUrl": "https://github.com/Milesnocte/PFLogs",
+    "Description": "Hides the Weeaboo Police, requires Visibility by SheepGoMeh",
+    "ApplicableVersion": "any",
+    "Tags": [
+        "FFLogs",
+        "Tomestone",
+        "Party Finder"
+    ],
+    "DalamudApiLevel": 13,
+    "LoadRequiredState": 0,
+    "LoadSync": false,
+    "CanUnloadAsync": false,
+    "LoadPriority": 0,
+    "Punchline": "Hides the Weeaboo Police, requires Visibility by SheepGoMeh",
+    "AcceptsFeedback": true
+}
