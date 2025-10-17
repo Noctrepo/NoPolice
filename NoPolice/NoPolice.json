@@ -5,10 +5,9 @@
     "AssemblyVersion": "1.0.0.0",
     "RepoUrl": "https://github.com/Noctrepo/NoPolice",
     "IconUrl": "https://github.com/Noctrepo/NoPolice/blob/master/NoPolice/Icon/NoPolice.png",
-    "Description": "Hides the Weeaboo Police, requires Visibility by SheepGoMeh",
+    "Description": "Hides the Weeaboo Police. there are no commands, just turning the plugin on/off will hide/show all of them",
     "ApplicableVersion": "any",
     "Tags": [
-        "Visibility",
         "Police",
         "Weeaboo",
         "Weeaboo Police"
@@ -18,6 +17,6 @@
     "LoadSync": false,
     "CanUnloadAsync": false,
     "LoadPriority": 0,
-    "Punchline": "Hides the Weeaboo Police, requires Visibility by SheepGoMeh",
+    "Punchline": "Tired of seeing the naked Roes? This plugin hides the Weeaboo Police from view",
     "AcceptsFeedback": true
 }

@@ -6,21 +6,20 @@ using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 
 namespace NoPolice;
 
 public sealed class Plugin : IDalamudPlugin
 {
-    
-    [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
-    [PluginService] internal static IChatGui Chat { get; private set; } = null!;
     [PluginService] internal static IFramework Framework { get; private set; } = null!;
-    [PluginService] internal static IClientState ClientState { get; private set; } = null!;
     [PluginService] internal static IObjectTable ObjectTable { get; private set; } = null!;
     
     private CancellationTokenSource  _cts = new CancellationTokenSource();
+    private List<uint> hiddenPlayersIds = new();
+    private List<uint> PlayersToShowIds = new();
+    private bool _showing = false;
 
     private List<string> Police = new()
     {
@@ -30,65 +29,79 @@ public sealed class Plugin : IDalamudPlugin
 
     public Plugin()
     {
-        if (!PluginInterface.GetIpcSubscriber<string, uint, string, object>("Visibility.AddToVoidList").HasFunction)
-        {
-            Chat.PrintError("Visibility plugin is required for this plugin to work.", "NoPolice");
-        }
-        
-        Framework.RunOnFrameworkThread(VisibilityPoll);
-        
-        ClientState.Login += OnLogin;
+        Framework.RunOnFrameworkThread(PlayerPoll);
     }
 
-    private void OnLogin()
-    {
-        if (!PluginInterface.GetIpcSubscriber<string, uint, string, object>("Visibility.AddToVoidList").HasFunction)
-        {
-            Chat.PrintError("Visibility plugin is required for this plugin to work.", "NoPolice");
-        }
-    }
-
-    private void VisibilityPoll()
+    private void PlayerPoll()
     {
         try
         {
-            ICallGateSubscriber<string, uint, string, object>? AddToVoidList = null;
-            ICallGateSubscriber<IEnumerable<string>>? GetVoidListEntries = null;
-            List<string> VisibilityVoidList = new();
-
-            AddToVoidList = PluginInterface.GetIpcSubscriber<string, uint, string, object>("Visibility.AddToVoidList");
-            GetVoidListEntries = PluginInterface.GetIpcSubscriber<IEnumerable<string>>("Visibility.GetVoidListEntries");
-            VisibilityVoidList = GetVoidListEntries.InvokeFunc().ToList();
-
+            if (_cts.IsCancellationRequested)
+                return;
+            
             foreach (IGameObject actor in ObjectTable)
             {
                 if (actor is not IPlayerCharacter player) continue;
 
                 string name = player.Name.TextValue;
-                string pvisName = $"{player.Name.TextValue} {player.HomeWorld.RowId} NoPolice";
+                string normalizedName = new string(name.Where(char.IsLetter).ToArray()).ToLowerInvariant();
 
-                if (!Police.Contains(NormalizeName(name))) continue;
-                if (VisibilityVoidList.Contains(pvisName)) continue;
-
-                AddToVoidList!.InvokeAction(name, player.HomeWorld.RowId, "NoPolice");
-                VisibilityVoidList = GetVoidListEntries.InvokeFunc().ToList();
+                if (!Police.Contains(normalizedName)) continue;
+                
+                HidePlayer(actor);
             }
 
-            Framework.RunOnTick(VisibilityPoll, TimeSpan.FromSeconds(3), cancellationToken: _cts.Token);
+            Framework.RunOnTick(PlayerPoll, TimeSpan.FromSeconds(3), cancellationToken: _cts.Token);
         }
         catch (Exception e)
         {
-            Framework.RunOnTick(VisibilityPoll, TimeSpan.FromSeconds(3), cancellationToken: _cts.Token);
+            Framework.RunOnTick(PlayerPoll, TimeSpan.FromSeconds(3), cancellationToken: _cts.Token);
         }
     }
-    
-    private static string NormalizeName(string name)
+
+    private unsafe void HidePlayer(IGameObject player)
     {
-        return new string(name.Where(char.IsLetter).ToArray()).ToLowerInvariant();
+        var charPtr = (Character*)player.Address;
+        
+        if (charPtr == null)
+            return;
+
+        var flags = (RenderFlags)charPtr->GameObject.RenderFlags;
+        
+        if(PlayersToShowIds.Contains(player.EntityId)) return;
+
+        if (!flags.HasFlag(RenderFlags.Invisible))
+        {
+            charPtr->GameObject.RenderFlags |= (int)RenderFlags.Invisible;
+        }
+        
+        hiddenPlayersIds.Add(player.EntityId);
     }
+
+    private unsafe void ShowGameObjects()
+    {
+        foreach (var id in hiddenPlayersIds.ToList())
+        {
+            var obj = ObjectTable.SearchById(id);
+            if (obj == null) continue;
+
+            var character = (Character*)obj.Address;
+            
+            if (character != null)
+                character->GameObject.RenderFlags = (int)RenderFlags.None;
+
+            hiddenPlayersIds.Remove(id);
+        }
+    }
+
     
     public void Dispose()
     {
+        PlayersToShowIds = hiddenPlayersIds;
+        _cts.Cancel();
+
+        ShowGameObjects();
+        
         _cts.Dispose();
     }
 }
