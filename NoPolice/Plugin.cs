@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
+using System.Threading.Tasks;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.IoC;
@@ -16,20 +18,25 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IFramework Framework { get; private set; } = null!;
     [PluginService] internal static IObjectTable ObjectTable { get; private set; } = null!;
     
-    private CancellationTokenSource  _cts = new CancellationTokenSource();
-    private List<uint> hiddenPlayersIds = new();
-    private List<uint> PlayersToShowIds = new();
+    private static readonly string Url =
+        "https://raw.githubusercontent.com/Noctrepo/NoPolice/refs/heads/master/NoPolice-data/blocklist.txt";
+    
+    private readonly CancellationTokenSource  _cts = new();
+    private readonly List<uint> hiddenPlayersIds = new();
+    private List<uint> _playersToShowIds = new();
     private bool _showing = false;
 
-    private List<string> Police = new()
-    {
-        "weeaboopolice",
-        "weebpolicelieutenant"
-    };
+    private HashSet<string> _police = new();
 
     public Plugin()
     {
-        Framework.RunOnFrameworkThread(PlayerPoll);
+        _ = Initialize();
+    }
+
+    private async Task Initialize()
+    {
+        _police = await GetList();
+        await Framework.RunOnFrameworkThread(PlayerPoll);
     }
 
     private void PlayerPoll()
@@ -46,7 +53,7 @@ public sealed class Plugin : IDalamudPlugin
                 string name = player.Name.TextValue;
                 string normalizedName = new string(name.Where(char.IsLetter).ToArray()).ToLowerInvariant();
 
-                if (!Police.Contains(normalizedName)) continue;
+                if (!_police.Contains(normalizedName)) continue;
                 
                 HidePlayer(actor);
             }
@@ -58,6 +65,18 @@ public sealed class Plugin : IDalamudPlugin
             Framework.RunOnTick(PlayerPoll, TimeSpan.FromSeconds(3), cancellationToken: _cts.Token);
         }
     }
+    
+    static async Task<HashSet<string>> GetList()
+    {
+        using var http = new HttpClient();
+        using var resp = await http.GetAsync(Url).ConfigureAwait(false);
+        resp.EnsureSuccessStatusCode();
+        
+        var bannedListRaw = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+        var bannedListLines = bannedListRaw.Split("\n");
+        
+        return bannedListLines.Where(bannedListLine => !bannedListLine.StartsWith("#")).ToHashSet();
+    }
 
     private unsafe void HidePlayer(IGameObject player)
     {
@@ -68,7 +87,7 @@ public sealed class Plugin : IDalamudPlugin
 
         var flags = (RenderFlags)charPtr->GameObject.RenderFlags;
         
-        if(PlayersToShowIds.Contains(player.EntityId)) return;
+        if(_playersToShowIds.Contains(player.EntityId)) return;
 
         if (!flags.HasFlag(RenderFlags.Invisible))
         {
@@ -97,7 +116,7 @@ public sealed class Plugin : IDalamudPlugin
     
     public void Dispose()
     {
-        PlayersToShowIds = hiddenPlayersIds;
+        _playersToShowIds = hiddenPlayersIds;
         _cts.Cancel();
 
         ShowGameObjects();

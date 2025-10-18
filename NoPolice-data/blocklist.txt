@@ -2,6 +2,6 @@
 # version: 2025-10-18
 # Names should be separated by a newline, contain no spaces, or special characters
 # example: weeaboopolice
-
 weeaboopolice
 weebpolicelieutenant
+weeaboopolicechief
