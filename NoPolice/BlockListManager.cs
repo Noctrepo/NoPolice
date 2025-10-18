@@ -54,7 +54,7 @@ public static class BlockListManager
             using var listResp = await http.GetAsync(rawUrl, ct.Token).ConfigureAwait(false);
             if (!listResp.IsSuccessStatusCode) return;
 
-            var listText = await listResp.Content.ReadAsStringAsync(ct.Token).ConfigureAwait(false).listText.Split("\n");
+            var listText = (await listResp.Content.ReadAsStringAsync(ct.Token).ConfigureAwait(false)).Split("\n");
 
             var returnedNames = listText.Where(bannedListLine => !bannedListLine.StartsWith("#")).ToHashSet();
             if (returnedNames.Count == 0) return;
