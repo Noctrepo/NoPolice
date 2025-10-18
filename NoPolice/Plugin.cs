@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading;
-using System.Threading.Tasks;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using Lumina.Excel.Sheets;
 
 namespace NoPolice;
 
@@ -17,26 +16,37 @@ public sealed class Plugin : IDalamudPlugin
 {
     [PluginService] internal static IFramework Framework { get; private set; } = null!;
     [PluginService] internal static IObjectTable ObjectTable { get; private set; } = null!;
-    
-    private static readonly string Url =
-        "https://raw.githubusercontent.com/Noctrepo/NoPolice/refs/heads/master/NoPolice-data/blocklist.txt";
+    [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
+    [PluginService] internal static IClientState ClientState { get; private set; } = null!;
+    [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
+    [PluginService] internal static IPluginLog Logger { get; private set; } = null!;
     
     private readonly CancellationTokenSource  _cts = new();
     private readonly List<uint> hiddenPlayersIds = new();
     private List<uint> _playersToShowIds = new();
+    private Configuration _cfg = null!;
     private bool _showing = false;
-
-    private HashSet<string> _police = new();
+    
+    private static readonly HashSet<uint> allowedTerritories = [
+        0, // Hub Cities
+        1, // Overworld
+        13, // Residential Area
+        19, // Unknown
+        21, // The Firmament
+        23, // Gold Saucer
+        44, // Leap of Faith
+        46, // Ocean Fishing
+        47, // The Diadem
+        60, // Stellar Exploration
+    ];
 
     public Plugin()
     {
-        _ = Initialize();
-    }
+        _cfg = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 
-    private async Task Initialize()
-    {
-        _police = await GetList();
-        await Framework.RunOnFrameworkThread(PlayerPoll);
+        _ = BlockListManager.RefreshBlockList(PluginInterface, _cfg, Logger, _cts);
+        
+        Framework.RunOnFrameworkThread(PlayerPoll);
     }
 
     private void PlayerPoll()
@@ -45,6 +55,10 @@ public sealed class Plugin : IDalamudPlugin
         {
             if (_cts.IsCancellationRequested)
                 return;
+
+            // Ensure the plugin does not effect combat
+            var territoryType = DataManager.GetExcelSheet<TerritoryType>()[ClientState.TerritoryType];
+            if (!IsAllowedTerritory(territoryType)) return;
             
             foreach (IGameObject actor in ObjectTable)
             {
@@ -53,29 +67,17 @@ public sealed class Plugin : IDalamudPlugin
                 string name = player.Name.TextValue;
                 string normalizedName = new string(name.Where(char.IsLetter).ToArray()).ToLowerInvariant();
 
-                if (!_police.Contains(normalizedName)) continue;
+                if (!_cfg.BlocklistNames.Contains(normalizedName)) continue;
                 
                 HidePlayer(actor);
             }
 
-            Framework.RunOnTick(PlayerPoll, TimeSpan.FromSeconds(3), cancellationToken: _cts.Token);
+            Framework.RunOnTick(PlayerPoll, TimeSpan.FromSeconds(1), cancellationToken: _cts.Token);
         }
         catch (Exception e)
         {
-            Framework.RunOnTick(PlayerPoll, TimeSpan.FromSeconds(3), cancellationToken: _cts.Token);
+            Framework.RunOnTick(PlayerPoll, TimeSpan.FromSeconds(1), cancellationToken: _cts.Token);
         }
-    }
-    
-    static async Task<HashSet<string>> GetList()
-    {
-        using var http = new HttpClient();
-        using var resp = await http.GetAsync(Url).ConfigureAwait(false);
-        resp.EnsureSuccessStatusCode();
-        
-        var bannedListRaw = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
-        var bannedListLines = bannedListRaw.Split("\n");
-        
-        return bannedListLines.Where(bannedListLine => !bannedListLine.StartsWith("#")).ToHashSet();
     }
 
     private unsafe void HidePlayer(IGameObject player)
@@ -112,11 +114,14 @@ public sealed class Plugin : IDalamudPlugin
             hiddenPlayersIds.Remove(id);
         }
     }
-
+    
+    public static bool IsAllowedTerritory(TerritoryType territory)
+    {
+        return (allowedTerritories.Contains(territory.TerritoryIntendedUse.RowId)) && !territory.Name.IsEmpty;
+    }
     
     public void Dispose()
     {
-        _playersToShowIds = hiddenPlayersIds;
         _cts.Cancel();
 
         ShowGameObjects();

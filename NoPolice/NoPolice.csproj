@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Dalamud.NET.Sdk/13.0.0">
-
     <PropertyGroup>
         <Version>1.0.0.0</Version>
         <Description>NoPolice</Description>
@@ -18,16 +17,4 @@
         <DefineConstants>TRACE</DefineConstants>
         <Optimize>true</Optimize>
     </PropertyGroup>
-
-    <ItemGroup>
-      <Content Include="NoPolice\NoPolice.json" />
-      <Content Include="NoPolice\packages.lock.json" />
-      <Content Include="repo.json" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Update="DalamudPackager" Version="13.1.0" />
-      <PackageReference Include="XivCommon" Version="9.0.0" />
-    </ItemGroup>
-
 </Project>
