@@ -3,7 +3,7 @@
         <Version>1.0.0.0</Version>
         <Description>NoPolice</Description>
 
-        <PackageProjectUrl>https://github.com/Noctrepo/NoPolice/</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/Noctrepo/NoPolice</PackageProjectUrl>
         <PackageLicenseExpression>GPL-3.0</PackageLicenseExpression>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
