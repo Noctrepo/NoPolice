@@ -8,6 +8,7 @@ using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using Lumina.Excel.Sheets;
 
 namespace NoPolice;
@@ -21,6 +22,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
     [PluginService] internal static IPluginLog Logger { get; private set; } = null!;
     
+    private TerritoryType _territoryType;
     private readonly CancellationTokenSource  _cts = new();
     private readonly List<uint> hiddenPlayersIds = new();
     private List<uint> _playersToShowIds = new();
@@ -45,38 +47,49 @@ public sealed class Plugin : IDalamudPlugin
         _cfg = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 
         _ = BlockListManager.RefreshBlockList(PluginInterface, _cfg, Logger, _cts);
+
+        ClientState.TerritoryChanged += TerritoryChange;
+        _territoryType = DataManager.GetExcelSheet<TerritoryType>()[ClientState.TerritoryType];
         
-        Framework.RunOnFrameworkThread(PlayerPoll);
+        Framework.RunOnFrameworkThread(Poll);
     }
 
-    private void PlayerPoll()
+    private void TerritoryChange(ushort @ushort)
+    {
+        _territoryType = DataManager.GetExcelSheet<TerritoryType>()[ClientState.TerritoryType];
+        if (!IsAllowedTerritory(_territoryType)) return;
+        CheckPlayers();
+    }
+
+    private void Poll()
     {
         try
         {
             if (_cts.IsCancellationRequested)
                 return;
 
-            // Ensure the plugin does not effect combat
-            var territoryType = DataManager.GetExcelSheet<TerritoryType>()[ClientState.TerritoryType];
-            if (!IsAllowedTerritory(territoryType)) return;
-            
-            foreach (IGameObject actor in ObjectTable)
-            {
-                if (actor is not IPlayerCharacter player) continue;
+            CheckPlayers();
 
-                string name = player.Name.TextValue;
-                string normalizedName = new string(name.Where(char.IsLetter).ToArray()).ToLowerInvariant();
-
-                if (!_cfg.BlocklistNames.Contains(normalizedName)) continue;
-                
-                HidePlayer(actor);
-            }
-
-            Framework.RunOnTick(PlayerPoll, TimeSpan.FromSeconds(1), cancellationToken: _cts.Token);
+            Framework.RunOnTick(Poll, TimeSpan.FromSeconds(1), cancellationToken: _cts.Token);
         }
         catch (Exception e)
         {
-            Framework.RunOnTick(PlayerPoll, TimeSpan.FromSeconds(1), cancellationToken: _cts.Token);
+            Framework.RunOnTick(Poll, TimeSpan.FromSeconds(1), cancellationToken: _cts.Token);
+        }
+    }
+
+    private void CheckPlayers()
+    {
+        foreach (IGameObject actor in ObjectTable)
+        {
+            if (actor is not IPlayerCharacter player) continue;
+
+            string name = player.Name.TextValue;
+            string normalizedName = new string(name.Where(char.IsLetter).ToArray()).ToLowerInvariant();
+
+            if (!_cfg.BlocklistNames.Contains(normalizedName)) continue;
+                
+            HidePlayer(actor);
         }
     }
 
@@ -93,7 +106,7 @@ public sealed class Plugin : IDalamudPlugin
 
         if (!flags.HasFlag(RenderFlags.Invisible))
         {
-            charPtr->GameObject.RenderFlags |= (int)RenderFlags.Invisible;
+            charPtr->GameObject.RenderFlags |= (VisibilityFlags)RenderFlags.Invisible;
         }
         
         hiddenPlayersIds.Add(player.EntityId);
@@ -109,7 +122,7 @@ public sealed class Plugin : IDalamudPlugin
             var character = (Character*)obj.Address;
             
             if (character != null)
-                character->GameObject.RenderFlags = (int)RenderFlags.None;
+                character->GameObject.RenderFlags = (VisibilityFlags)RenderFlags.None;
 
             hiddenPlayersIds.Remove(id);
         }
