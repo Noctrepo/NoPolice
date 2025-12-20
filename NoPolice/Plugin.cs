@@ -49,16 +49,22 @@ public sealed class Plugin : IDalamudPlugin
         _ = BlockListManager.RefreshBlockList(PluginInterface, _cfg, Logger, _cts);
 
         ClientState.TerritoryChanged += TerritoryChange;
-        _territoryType = DataManager.GetExcelSheet<TerritoryType>()[ClientState.TerritoryType];
         
         Framework.RunOnFrameworkThread(Poll);
     }
 
     private void TerritoryChange(ushort @ushort)
     {
-        _territoryType = DataManager.GetExcelSheet<TerritoryType>()[ClientState.TerritoryType];
-        if (!IsAllowedTerritory(_territoryType)) return;
-        CheckPlayers();
+        try
+        {
+            var territoryType = DataManager.GetExcelSheet<TerritoryType>()[ClientState.TerritoryType];
+            if (!IsAllowedTerritory(territoryType)) return;
+            CheckPlayers();
+        }
+        catch (Exception e)
+        {
+            Logger.Logger.Error(e.ToString());
+        }
     }
 
     private void Poll()
@@ -74,57 +80,79 @@ public sealed class Plugin : IDalamudPlugin
         }
         catch (Exception e)
         {
+            Logger.Logger.Error(e.ToString());
             Framework.RunOnTick(Poll, TimeSpan.FromSeconds(1), cancellationToken: _cts.Token);
         }
     }
 
     private void CheckPlayers()
     {
-        foreach (IGameObject actor in ObjectTable)
+        try
         {
-            if (actor is not IPlayerCharacter player) continue;
+            foreach (IGameObject actor in ObjectTable)
+            {
+                if (actor is not IPlayerCharacter player) continue;
 
-            string name = player.Name.TextValue;
-            string normalizedName = new string(name.Where(char.IsLetter).ToArray()).ToLowerInvariant();
+                string name = player.Name.TextValue;
+                string normalizedName = new string(name.Where(char.IsLetter).ToArray()).ToLowerInvariant();
 
-            if (!_cfg.BlocklistNames.Contains(normalizedName)) continue;
-                
-            HidePlayer(actor);
+                if (!_cfg.BlocklistNames.Contains(normalizedName)) continue;
+
+                HidePlayer(actor);
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.Logger.Error(e.ToString());
         }
     }
 
     private unsafe void HidePlayer(IGameObject player)
     {
-        var charPtr = (Character*)player.Address;
-        
-        if (charPtr == null)
-            return;
-
-        var flags = (RenderFlags)charPtr->GameObject.RenderFlags;
-        
-        if(_playersToShowIds.Contains(player.EntityId)) return;
-
-        if (!flags.HasFlag(RenderFlags.Invisible))
+        try
         {
-            charPtr->GameObject.RenderFlags |= (VisibilityFlags)RenderFlags.Invisible;
+            var charPtr = (Character*)player.Address;
+
+            if (charPtr == null)
+                return;
+
+            var flags = (RenderFlags)charPtr->GameObject.RenderFlags;
+
+            if (_playersToShowIds.Contains(player.EntityId)) return;
+
+            if (!flags.HasFlag(RenderFlags.Invisible))
+            {
+                charPtr->GameObject.RenderFlags |= (VisibilityFlags)RenderFlags.Invisible;
+            }
+
+            hiddenPlayersIds.Add(player.EntityId);
         }
-        
-        hiddenPlayersIds.Add(player.EntityId);
+        catch (Exception e)
+        {
+            Logger.Logger.Error(e.ToString());
+        }
     }
 
     private unsafe void ShowGameObjects()
     {
-        foreach (var id in hiddenPlayersIds.ToList())
+        try
         {
-            var obj = ObjectTable.SearchById(id);
-            if (obj == null) continue;
+            foreach (var id in hiddenPlayersIds.ToList())
+            {
+                var obj = ObjectTable.SearchById(id);
+                if (obj == null) continue;
 
-            var character = (Character*)obj.Address;
-            
-            if (character != null)
-                character->GameObject.RenderFlags = (VisibilityFlags)RenderFlags.None;
+                var character = (Character*)obj.Address;
 
-            hiddenPlayersIds.Remove(id);
+                if (character != null)
+                    character->GameObject.RenderFlags = (VisibilityFlags)RenderFlags.None;
+
+                hiddenPlayersIds.Remove(id);
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.Logger.Error(e.ToString());
         }
     }
     
