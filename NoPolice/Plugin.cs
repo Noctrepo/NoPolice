@@ -22,15 +22,16 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
     [PluginService] internal static IPluginLog Logger { get; private set; } = null!;
     [PluginService] internal static IChatGui ChatGui { get; private set; } = null!;
-
+    
     private TerritoryType _territoryType;
-    private readonly CancellationTokenSource _cts = new();
-    private readonly List<uint> hiddenPlayersIds = new();
+    private readonly CancellationTokenSource  _cts = new();
+    private readonly HashSet<uint> hiddenPlayersIds = new();
     private List<uint> _playersToShowIds = new();
     private Configuration _cfg = null!;
     private ChatHandler _chatHandler = null!;
     private bool _showing = false;
-
+    private readonly Dictionary<string, string> _nameCache = new(StringComparer.Ordinal);
+    
     private static readonly HashSet<uint> allowedTerritories = [
         0, // Hub Cities
         1, // Overworld
@@ -48,7 +49,7 @@ public sealed class Plugin : IDalamudPlugin
     {
         _cfg = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 
-        _chatHandler = new ChatHandler(_cfg);
+        _chatHandler = new ChatHandler(_cfg, _nameCache);
 
         _ = BlockListManager.RefreshBlockList(PluginInterface, _cfg, Logger, _cts);
 
@@ -93,12 +94,19 @@ public sealed class Plugin : IDalamudPlugin
     {
         try
         {
+            if (_cfg.BlocklistNames.Count == 0) return;
+
             foreach (IGameObject actor in ObjectTable)
             {
                 if (actor is not IPlayerCharacter player) continue;
 
-                string name = player.Name.TextValue;
-                string normalizedName = new string(name.Where(char.IsLetter).ToArray()).ToLowerInvariant();
+                var name = player.Name.TextValue;
+                
+                if (!_nameCache.TryGetValue(name, out var normalizedName))
+                {
+                    normalizedName = NormalizeName(name);
+                    _nameCache[name] = normalizedName;
+                }
 
                 if (!_cfg.BlocklistNames.Contains(normalizedName)) continue;
 
@@ -111,6 +119,22 @@ public sealed class Plugin : IDalamudPlugin
         }
     }
 
+    private static string NormalizeName(string name)
+    {
+        Span<char> buffer = stackalloc char[name.Length];
+        int writeIndex = 0;
+
+        foreach (char c in name)
+        {
+            if (char.IsLetter(c))
+            {
+                buffer[writeIndex++] = char.ToLowerInvariant(c);
+            }
+        }
+
+        return new string(buffer[..writeIndex]);
+    }
+
     private unsafe void HidePlayer(IGameObject player)
     {
         try
@@ -119,16 +143,15 @@ public sealed class Plugin : IDalamudPlugin
 
             if (charPtr == null)
                 return;
-
-            var flags = (RenderFlags)charPtr->GameObject.RenderFlags;
-
+            
+            if (hiddenPlayersIds.Contains(player.EntityId)) return;
             if (_playersToShowIds.Contains(player.EntityId)) return;
 
-            if (!flags.HasFlag(RenderFlags.Invisible))
-            {
-                charPtr->GameObject.RenderFlags |= (VisibilityFlags)RenderFlags.Invisible;
-            }
-
+            var flags = (RenderFlags)charPtr->GameObject.RenderFlags;
+            
+            if (flags.HasFlag(RenderFlags.Invisible)) return;
+            
+            charPtr->GameObject.RenderFlags |= (VisibilityFlags)RenderFlags.Invisible;
             hiddenPlayersIds.Add(player.EntityId);
         }
         catch (Exception e)
@@ -159,20 +182,17 @@ public sealed class Plugin : IDalamudPlugin
             Logger.Logger.Error(e.ToString());
         }
     }
-
+    
     public static bool IsAllowedTerritory(TerritoryType territory)
     {
         return (allowedTerritories.Contains(territory.TerritoryIntendedUse.RowId)) && !territory.Name.IsEmpty;
     }
-
+    
     public void Dispose()
     {
         _cts.Cancel();
-
         _chatHandler?.Dispose();
-
         ShowGameObjects();
-
         _cts.Dispose();
     }
 }
