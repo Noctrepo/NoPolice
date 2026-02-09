@@ -21,14 +21,16 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IClientState ClientState { get; private set; } = null!;
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
     [PluginService] internal static IPluginLog Logger { get; private set; } = null!;
-    
+    [PluginService] internal static IChatGui ChatGui { get; private set; } = null!;
+
     private TerritoryType _territoryType;
-    private readonly CancellationTokenSource  _cts = new();
+    private readonly CancellationTokenSource _cts = new();
     private readonly List<uint> hiddenPlayersIds = new();
     private List<uint> _playersToShowIds = new();
     private Configuration _cfg = null!;
+    private ChatHandler _chatHandler = null!;
     private bool _showing = false;
-    
+
     private static readonly HashSet<uint> allowedTerritories = [
         0, // Hub Cities
         1, // Overworld
@@ -46,10 +48,12 @@ public sealed class Plugin : IDalamudPlugin
     {
         _cfg = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 
+        _chatHandler = new ChatHandler(_cfg);
+
         _ = BlockListManager.RefreshBlockList(PluginInterface, _cfg, Logger, _cts);
 
         ClientState.TerritoryChanged += TerritoryChange;
-        
+
         Framework.RunOnFrameworkThread(Poll);
     }
 
@@ -155,18 +159,20 @@ public sealed class Plugin : IDalamudPlugin
             Logger.Logger.Error(e.ToString());
         }
     }
-    
+
     public static bool IsAllowedTerritory(TerritoryType territory)
     {
         return (allowedTerritories.Contains(territory.TerritoryIntendedUse.RowId)) && !territory.Name.IsEmpty;
     }
-    
+
     public void Dispose()
     {
         _cts.Cancel();
 
+        _chatHandler?.Dispose();
+
         ShowGameObjects();
-        
+
         _cts.Dispose();
     }
 }
