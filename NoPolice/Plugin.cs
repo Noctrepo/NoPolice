@@ -144,12 +144,7 @@ public sealed class Plugin : IDalamudPlugin
             if (charPtr == null)
                 return;
             
-            if (hiddenPlayersIds.Contains(player.EntityId)) return;
             if (_playersToShowIds.Contains(player.EntityId)) return;
-
-            var flags = (RenderFlags)charPtr->GameObject.RenderFlags;
-            
-            if (flags.HasFlag(RenderFlags.Invisible)) return;
             
             charPtr->GameObject.RenderFlags |= (VisibilityFlags)RenderFlags.Invisible;
             hiddenPlayersIds.Add(player.EntityId);
