@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Dalamud.NET.Sdk/14.0.1">
     <PropertyGroup>
-        <Version>1.0.0.3</Version>
-        <Description>NoPolice</Description>
+        <Version>1.0.0.4</Version>
+        <Description>Removes the Weeaboo Police and his alts</Description>
 
         <PackageProjectUrl>https://github.com/Noctrepo/NoPolice</PackageProjectUrl>
         <PackageLicenseExpression>GPL-3.0</PackageLicenseExpression>
