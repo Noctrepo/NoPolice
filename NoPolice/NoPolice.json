@@ -2,7 +2,7 @@
     "Author": "Nocturn",
     "Name": "NoPolice",
     "InternalName": "NoPolice",
-    "AssemblyVersion": "1.0.0.3",
+    "AssemblyVersion": "1.0.0.5",
     "RepoUrl": "https://github.com/Noctrepo/NoPolice",
     "IconUrl": "https://github.com/Noctrepo/NoPolice/blob/master/NoPolice/Icon/NoPolice.png",
     "Description": "Hides the Weeaboo Police",
@@ -12,7 +12,7 @@
         "Weeaboo",
         "Weeaboo Police"
     ],
-    "DalamudApiLevel": 14,
+    "DalamudApiLevel": 15,
     "LoadRequiredState": 0,
     "LoadSync": false,
     "CanUnloadAsync": false,

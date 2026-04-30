@@ -58,7 +58,7 @@ public sealed class Plugin : IDalamudPlugin
         Framework.RunOnFrameworkThread(Poll);
     }
 
-    private void TerritoryChange(ushort @ushort)
+    private void TerritoryChange(uint u)
     {
         try
         {
@@ -107,7 +107,7 @@ public sealed class Plugin : IDalamudPlugin
                     normalizedName = NormalizeName(name);
                     _nameCache[name] = normalizedName;
                 }
-
+                
                 if (!_cfg.BlocklistNames.Contains(normalizedName)) continue;
 
                 HidePlayer(actor);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Dalamud.Game.Chat;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -24,20 +25,16 @@ public class ChatHandler : IDisposable
     }
 
     private void OnChatMessage(
-        XivChatType type,
-        int timestamp,
-        ref SeString sender,
-        ref SeString message,
-        ref bool isHandled)
+        IHandleableChatMessage handleableChatMessage)
     {
-        if (isHandled)
+        if (handleableChatMessage.IsHandled)
             return;
         
         if (_config.BlocklistNames.Count == 0)
             return;
 
         PlayerPayload? playerPayload = null;
-        foreach (var payload in sender.Payloads)
+        foreach (var payload in handleableChatMessage.Sender.Payloads)
         {
             if (payload is not PlayerPayload pp) continue;
             
@@ -46,11 +43,11 @@ public class ChatHandler : IDisposable
         }
 
         PlayerPayload? emotePlayerPayload = null;
-        bool isEmoteType = type is XivChatType.CustomEmote or XivChatType.StandardEmote;
+        bool isEmoteType = handleableChatMessage.LogKind is XivChatType.CustomEmote or XivChatType.StandardEmote;
 
         if (isEmoteType)
         {
-            foreach (var payload in message.Payloads)
+            foreach (var payload in handleableChatMessage.Message.Payloads)
             {
                 if (payload is not PlayerPayload pp) continue;
                 
@@ -77,7 +74,7 @@ public class ChatHandler : IDisposable
 
         if (_config.BlocklistNames.Contains(normalizedName))
         {
-            isHandled = true;
+            handleableChatMessage.PreventOriginal();
         }
     }
 
