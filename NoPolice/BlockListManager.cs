@@ -59,6 +59,8 @@ public static class BlockListManager
             var returnedNames = listText.Where(bannedListLine => !bannedListLine.StartsWith("#")).ToHashSet();
             if (returnedNames.Count == 0) return;
 
+            returnedNames.RemoveWhere(string.IsNullOrWhiteSpace);
+            
             cfg.BlocklistNames = returnedNames.ToHashSet();
             cfg.CachedSha = meta.sha;
             cfg.LastFetchedUtc = DateTime.UtcNow;
