@@ -60,9 +60,9 @@ public sealed class Plugin : IDalamudPlugin
         {
             unsafe
             {
-                //bool badCondition = forbiddenConditions.Any(flag => Condition[flag]);
-            
-                //if (badCondition) return;
+                bool badCondition = forbiddenConditions.Any(flag => Condition[flag]);
+                    
+                if (badCondition) return;
             
                 if (_cfg.BlocklistNames.Count == 0) return;
 
@@ -86,7 +86,7 @@ public sealed class Plugin : IDalamudPlugin
                     List<string> testNames = new List<string>() { "" };
                     
                     if (normalizedName.IsNullOrEmpty()) continue;
-                    //if (!_cfg.BlocklistNames.Contains(normalizedName) && !testNames.Contains(normalizedName)) continue;
+                    if (!_cfg.BlocklistNames.Contains(normalizedName) && !testNames.Contains(normalizedName)) continue;
 
                     HidePlayer(characterPtr);
                 }
