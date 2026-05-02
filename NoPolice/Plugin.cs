@@ -68,7 +68,7 @@ public sealed class Plugin : IDalamudPlugin
 
                 foreach (var gameObj in ObjectTable)
                 {
-                    GameObject* gameObject = GameObjectManager.Instance()->Objects.GameObjectIdSorted[gameObj.ObjectIndex];
+                    GameObject* gameObject = (GameObject*)gameObj.Address;
                     
                     if ((ObjectKind)gameObject->ObjectKind != ObjectKind.Pc) continue;
                     Character* characterPtr = (Character*)gameObject;
