@@ -38,7 +38,9 @@ public sealed class Plugin : IDalamudPlugin
         ConditionFlag.BetweenAreas,
         ConditionFlag.WatchingCutscene,
         ConditionFlag.DutyRecorderPlayback,
-        ConditionFlag.BoundByDuty
+        ConditionFlag.BoundByDuty,
+        ConditionFlag.LoggingOut,
+        ConditionFlag.BeingMoved
     };
 
     private readonly VisibilityFlags Invisible = VisibilityFlags.Model | VisibilityFlags.Nameplate;
@@ -65,11 +67,14 @@ public sealed class Plugin : IDalamudPlugin
                 if (badCondition) return;
             
                 if (_cfg.BlocklistNames.Count == 0) return;
+                
+                GameObject* localPlayer = GameObjectManager.Instance()->Objects.IndexSorted[0];
 
                 foreach (var gameObj in ObjectTable)
                 {
                     GameObject* gameObject = (GameObject*)gameObj.Address;
                     
+                    if(gameObject == localPlayer) continue;
                     if ((ObjectKind)gameObject->ObjectKind != ObjectKind.Pc) continue;
                     Character* characterPtr = (Character*)gameObject;
                     
@@ -159,7 +164,7 @@ public sealed class Plugin : IDalamudPlugin
 
                 var character = (Character*)obj.Address;
                 
-                if(!character->GameObject.RenderFlags.HasFlag(Invisible)) return;
+                if(!character->GameObject.RenderFlags.HasFlag(Invisible)) continue;
 
                 if (character != null)
                     character->GameObject.RenderFlags = (VisibilityFlags)RenderFlags.None;
@@ -175,6 +180,7 @@ public sealed class Plugin : IDalamudPlugin
     
     public void Dispose()
     {
+        Framework.Update -= CheckPlayers;
         _cts.Cancel();
         _chatHandler?.Dispose();
         ShowGameObjects();
